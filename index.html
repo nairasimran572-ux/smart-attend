@@ -67,6 +67,10 @@
             <div id="scanStatus" class="status-message">Select a mode and start the camera.</div>
             <div id="pendingVerify" class="verify-box hidden"><div><span class="eyebrow">QR MATCH FOUND</span><strong id="pendingStudentName">Student</strong><small id="pendingStudentId">ID</small></div><button class="btn btn-primary" id="verifyFaceBtn">Verify face</button></div>
           </div>
+          <div class="upload-qr-row">
+    <label for="qrImageInput">📤 Upload QR Image</label>
+    <input type="file" id="qrImageInput" accept="image/*">
+</div>
           <div class="panel instructions-panel"><h3>How it works</h3><div class="step"><b>01</b><div><strong>Register students</strong><p>Add each student and generate a unique QR code.</p></div></div><div class="step"><b>02</b><div><strong>Enroll face profile</strong><p>Capture a face sample in good lighting. The face descriptor is stored locally in this browser.</p></div></div><div class="step"><b>03</b><div><strong>Verify and check in</strong><p>Scan the student's QR code and verify the live face before marking present.</p></div></div><div class="notice"><strong>Demo safety note</strong><p>Face recognition is a demonstration, not a secure identity system. Use consent, avoid sensitive real student data, and provide a manual alternative.</p></div><div class="model-status" id="modelStatus">Face recognition models: not loaded</div></div>
         </div>
       </section>
