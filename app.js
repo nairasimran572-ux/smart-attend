@@ -83,5 +83,11 @@ function init(){ $("todayLabel").textContent=new Date().toLocaleDateString(undef
   document.querySelectorAll(".mode-card").forEach(b=>b.onclick=async()=>{if(faceStream||qrScanner?.isScanning)await stopCamera();currentMode=b.dataset.mode;document.querySelectorAll(".mode-card").forEach(x=>x.classList.toggle("selected",x===b));pendingStudent=null;$("pendingVerify").classList.add("hidden");setStatus("Mode changed. Start the camera to continue.")});
   loadFaceModels();
 }
-document.addEventListener("DOMContentLoaded",init);
-window.addEventListener("beforeunload",()=>{if(faceStream)faceStream.getTracks().forEach(t=>t.stop())});
+document.addEventListener("DOMContentLoaded", init);
+
+window.addEventListener("beforeunload", () => {
+  if (faceStream) faceStream.getTracks().forEach(t => t.stop());
+});
+
+// Allow index.html to call this function after scanning an uploaded QR image
+window.onQrDecoded = onQrDecoded;
