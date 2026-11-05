@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AttendSmart | Smart Attendance</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+  <script defer src="app.js"></script>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand"><div class="brand-mark">A</div><div><strong>AttendSmart</strong><small>SMART ATTENDANCE</small></div></div>
+      <nav>
+        <button class="nav-link active" data-view="dashboard"><span>▦</span> Dashboard</button>
+        <button class="nav-link" data-view="students"><span>♙</span> Students</button>
+        <button class="nav-link" data-view="scanner"><span>▣</span> Smart scanner</button>
+        <button class="nav-link" data-view="records"><span>☷</span> Attendance records</button>
+        <button class="nav-link" data-view="reports"><span>▤</span> Reports</button>
+      </nav>
+      <div class="sidebar-note"><span class="pulse"></span> Local demo mode <small>Data stays in this browser</small></div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div><p class="eyebrow">SCIENCE EXHIBITION PROJECT</p><h1 id="pageTitle">Dashboard</h1></div>
+        <div class="top-actions"><span class="date-chip" id="todayLabel"></span><button class="btn btn-primary" id="quickScanBtn">＋ Take attendance</button></div>
+      </header>
+
+      <section class="view active" id="dashboardView">
+        <div class="welcome-card">
+          <div><p class="eyebrow light">WELCOME TO ATTENDSMART</p><h2>Attendance, made smarter.</h2><p>Register students, scan their QR codes and verify identity with face recognition.</p><button class="btn btn-white" data-go="scanner">Open smart scanner →</button></div>
+          <div class="welcome-art"><div class="scan-ring">✓</div><div class="art-caption">QR + FACE<br/>VERIFICATION</div></div>
+        </div>
+        <div class="stats-grid">
+          <article class="stat-card"><div class="stat-icon violet">♙</div><div><span>Total students</span><strong id="totalStudents">0</strong><small>Registered students</small></div></article>
+          <article class="stat-card"><div class="stat-icon green">✓</div><div><span>Present today</span><strong id="presentToday">0</strong><small id="presentPercent">0% attendance</small></div></article>
+          <article class="stat-card"><div class="stat-icon orange">◷</div><div><span>Absent today</span><strong id="absentToday">0</strong><small>Not yet checked in</small></div></article>
+          <article class="stat-card"><div class="stat-icon blue">▣</div><div><span>Face profiles</span><strong id="faceProfiles">0</strong><small>Enrolled for verification</small></div></article>
+        </div>
+        <div class="content-grid">
+          <article class="panel"><div class="panel-heading"><div><h3>Today's attendance</h3><p>Live summary for the selected date</p></div><span class="tag" id="todayTag">TODAY</span></div><div class="chart-wrap"><div class="donut" id="attendanceDonut"><div><strong id="donutValue">0%</strong><small>Present</small></div></div><div class="legend"><div><i class="dot present"></i><span>Present</span><b id="legendPresent">0</b></div><div><i class="dot absent"></i><span>Absent</span><b id="legendAbsent">0</b></div></div></div></article>
+          <article class="panel"><div class="panel-heading"><div><h3>Recent check-ins</h3><p>Latest attendance activity</p></div><button class="text-btn" data-go="records">View all</button></div><div id="recentList" class="recent-list"><div class="empty-state">No attendance recorded yet.</div></div></article>
+        </div>
+      </section>
+
+      <section class="view" id="studentsView">
+        <div class="section-toolbar"><div><h2>Student directory</h2><p>Add students and create their personal QR identity cards.</p></div><button class="btn btn-primary" id="addStudentBtn">＋ Add student</button></div>
+        <div class="panel"><div class="table-tools"><input id="studentSearch" placeholder="Search by name, class or student ID…" /><span id="studentCountLabel" class="muted">0 students</span></div><div class="table-scroll"><table><thead><tr><th>STUDENT</th><th>STUDENT ID</th><th>CLASS</th><th>QR ID</th><th>FACE PROFILE</th><th>ACTIONS</th></tr></thead><tbody id="studentsTable"></tbody></table></div></div>
+      </section>
+
+      <section class="view" id="scannerView">
+        <div class="section-toolbar"><div><h2>Smart attendance scanner</h2><p>Use QR scanning, face recognition, or two-step verification.</p></div><span class="tag green-tag">CAMERA-BASED</span></div>
+        <div class="scanner-layout">
+          <div class="panel scanner-panel">
+            <div class="panel-heading"><div><h3>Verification mode</h3><p>Choose how students will be checked in.</p></div></div>
+            <div class="mode-grid">
+              <button class="mode-card selected" data-mode="combined"><span class="mode-symbol">▣＋◉</span><strong>QR + Face</strong><small>Scan QR, then verify face</small></button>
+              <button class="mode-card" data-mode="qr"><span class="mode-symbol">▣</span><strong>QR only</strong><small>Fast QR code check-in</small></button>
+              <button class="mode-card" data-mode="face"><span class="mode-symbol">◉</span><strong>Face only</strong><small>Recognize enrolled face</small></button>
+            </div>
+            <div class="camera-box"><div id="qrReader" class="qr-reader"></div><video id="faceVideo" autoplay muted playsinline></video><div id="cameraPlaceholder" class="camera-placeholder"><div class="camera-icon">▣</div><strong>Camera is not active</strong><span>Start the scanner to begin attendance.</span></div></div>
+            <div class="camera-actions"><button class="btn btn-primary" id="startCameraBtn">Start camera</button><button class="btn btn-secondary" id="stopCameraBtn" disabled>Stop camera</button></div>
+            <div id="scanStatus" class="status-message">Select a mode and start the camera.</div>
+            <div id="pendingVerify" class="verify-box hidden"><div><span class="eyebrow">QR MATCH FOUND</span><strong id="pendingStudentName">Student</strong><small id="pendingStudentId">ID</small></div><button class="btn btn-primary" id="verifyFaceBtn">Verify face</button></div>
+          </div>
+          <div class="panel instructions-panel"><h3>How it works</h3><div class="step"><b>01</b><div><strong>Register students</strong><p>Add each student and generate a unique QR code.</p></div></div><div class="step"><b>02</b><div><strong>Enroll face profile</strong><p>Capture a face sample in good lighting. The face descriptor is stored locally in this browser.</p></div></div><div class="step"><b>03</b><div><strong>Verify and check in</strong><p>Scan the student's QR code and verify the live face before marking present.</p></div></div><div class="notice"><strong>Demo safety note</strong><p>Face recognition is a demonstration, not a secure identity system. Use consent, avoid sensitive real student data, and provide a manual alternative.</p></div><div class="model-status" id="modelStatus">Face recognition models: not loaded</div></div>
+        </div>
+      </section>
+
+      <section class="view" id="recordsView">
+        <div class="section-toolbar"><div><h2>Attendance records</h2><p>Review check-ins and update attendance manually.</p></div><button class="btn btn-secondary" id="markAbsentBtn">Mark remaining absent</button></div>
+        <div class="panel"><div class="table-tools"><input type="date" id="recordDate" /><select id="recordFilter"><option value="all">All statuses</option><option value="Present">Present</option><option value="Absent">Absent</option></select></div><div class="table-scroll"><table><thead><tr><th>STUDENT</th><th>STUDENT ID</th><th>DATE</th><th>CHECK-IN</th><th>METHOD</th><th>STATUS</th><th>ACTION</th></tr></thead><tbody id="recordsTable"></tbody></table></div></div>
+      </section>
+
+      <section class="view" id="reportsView">
+        <div class="section-toolbar"><div><h2>Attendance reports</h2><p>Export attendance data for your exhibition demonstration.</p></div><button class="btn btn-primary" id="exportCsvBtn">↓ Export CSV</button></div>
+        <div class="stats-grid report-stats"><article class="stat-card"><div><span>Total check-ins</span><strong id="totalCheckins">0</strong><small>All recorded present entries</small></div></article><article class="stat-card"><div><span>Overall attendance</span><strong id="overallRate">0%</strong><small>Across recorded dates</small></div></article></div>
+        <div class="panel"><div class="panel-heading"><div><h3>Student attendance summary</h3><p>Present days compared with recorded school days.</p></div></div><div class="table-scroll"><table><thead><tr><th>STUDENT</th><th>CLASS</th><th>PRESENT DAYS</th><th>RECORDED DAYS</th><th>ATTENDANCE</th></tr></thead><tbody id="reportTable"></tbody></table></div></div>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="studentDialog">
+    <form id="studentForm" method="dialog">
+      <div class="dialog-head"><div><p class="eyebrow">STUDENT PROFILE</p><h2 id="dialogTitle">Add student</h2></div><button type="button" class="icon-btn" id="closeDialog">×</button></div>
+      <input type="hidden" id="editStudentId" />
+      <label>Full name<input id="studentName" required maxlength="60" placeholder="e.g. Asha Kumar" /></label>
+      <div class="form-row"><label>Student ID<input id="studentId" required maxlength="20" placeholder="e.g. STU001" /></label><label>Class / Section<input id="studentClass" required maxlength="30" placeholder="e.g. 10-A" /></label></div>
+      <div class="dialog-actions"><button type="button" class="btn btn-secondary" id="cancelDialog">Cancel</button><button type="submit" class="btn btn-primary">Save student</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="qrDialog"><div class="qr-dialog-content"><button class="icon-btn close-qr" id="closeQrDialog">×</button><p class="eyebrow">STUDENT QR ID CARD</p><h2 id="qrStudentName">Student</h2><p id="qrStudentInfo" class="muted"></p><div id="qrCode"></div><p class="qr-hint">Print or save this QR code for the student.</p><button class="btn btn-primary" id="printQrBtn">Print QR card</button></div></dialog>
+  <div id="toast" class="toast"></div>
+</body>
+</html>
