@@ -9,6 +9,7 @@ let qrScanner = null;
 let faceStream = null;
 let faceLoop = null;
 let pendingStudent = null;
+let pendingEnrollment = null;
 let modelsReady = false;
 let toastTimer;
 
@@ -79,7 +80,27 @@ function init(){ $("todayLabel").textContent=new Date().toLocaleDateString(undef
   $("closeQrDialog").onclick=()=>$("qrDialog").close();$("printQrBtn").onclick=()=>window.print();$("recordDate").onchange=renderRecords;$("recordFilter").onchange=renderRecords;
   $("recordsTable").addEventListener("click",e=>{const b=e.target.closest("[data-action]");if(!b)return;const s=state.students.find(x=>x.id===b.dataset.id);if(!s)return;const date=$("recordDate").value||today();let r=state.records.find(x=>x.studentId===s.id&&x.date===date);if(b.dataset.action==="present"){if(r)Object.assign(r,{status:"Present",time:timeNow(),method:"Manual"});else state.records.push({studentId:s.id,date,time:timeNow(),method:"Manual",status:"Present"})}else if(r)r.status="Absent";saveState()});
   $("markAbsentBtn").onclick=()=>{const date=$("recordDate").value||today();state.students.forEach(s=>{if(!attendanceFor(s.id,date))state.records.push({studentId:s.id,date,time:"—",method:"Not checked in",status:"Absent"})});saveState();toast("Remaining students marked absent")};
-  $("exportCsvBtn").onclick=exportCsv;$("startCameraBtn").onclick=startCamera;$("stopCameraBtn").onclick=stopCamera;$("verifyFaceBtn").onclick=verifyPendingFace;
+  $("exportCsvBtn").onclick = exportCsv;
+$("startCameraBtn").onclick = startCamera;
+$("stopCameraBtn").onclick = stopCamera;
+$("verifyFaceBtn").onclick = verifyPendingFace;
+
+// Capture face button
+$("captureFaceBtn").onclick = async () => {
+    if (!pendingEnrollment) {
+        toast("Select a student using Enroll Face first.");
+        return;
+    }
+
+    if (!faceStream) {
+        toast("Start the camera first.");
+        return;
+    }
+
+    $("captureFaceBtn").disabled = true;
+    await enrollFace(pendingEnrollment);
+    $("captureFaceBtn").disabled = false;
+};
   document.querySelectorAll(".mode-card").forEach(b=>b.onclick=async()=>{if(faceStream||qrScanner?.isScanning)await stopCamera();currentMode=b.dataset.mode;document.querySelectorAll(".mode-card").forEach(x=>x.classList.toggle("selected",x===b));pendingStudent=null;$("pendingVerify").classList.add("hidden");setStatus("Mode changed. Start the camera to continue.")});
   loadFaceModels();
 }
