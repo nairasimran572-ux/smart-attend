@@ -76,7 +76,39 @@ function init(){ $("todayLabel").textContent=new Date().toLocaleDateString(undef
   document.querySelectorAll(".nav-link").forEach(b=>b.addEventListener("click",()=>navigate(b.dataset.view)));document.querySelectorAll("[data-go]").forEach(b=>b.addEventListener("click",()=>navigate(b.dataset.go)));$("quickScanBtn").onclick=()=>navigate("scanner");
   $("addStudentBtn").onclick=()=>openStudentDialog();$("closeDialog").onclick=$("cancelDialog").onclick=()=>$("studentDialog").close();$("studentSearch").addEventListener("input",renderStudents);
   $("studentForm").addEventListener("submit",e=>{e.preventDefault();const edit=$("editStudentId").value,name=$("studentName").value.trim(),code=$("studentId").value.trim(),cls=$("studentClass").value.trim();if(!name||!code||!cls)return;const duplicate=state.students.some(s=>s.studentCode.toLowerCase()===code.toLowerCase()&&s.id!==edit);if(duplicate){toast("Student ID already exists.");return}if(edit){const s=state.students.find(x=>x.id===edit);Object.assign(s,{name,className:cls})}else state.students.push({id:crypto.randomUUID(),name,studentCode:code,className:cls,descriptor:null});saveState();$("studentDialog").close();toast("Student saved successfully")});
-  $("studentsTable").addEventListener("click",e=>{const b=e.target.closest("[data-action]");if(!b)return;const s=state.students.find(x=>x.id===b.dataset.id);if(!s)return;if(b.dataset.action==="qr")showQr(s);if(b.dataset.action==="face"){navigate("scanner");if(!modelsReady)toast("Wait for face models to load, then start camera.");else enrollFace(s)}if(b.dataset.action==="delete"&&confirm(`Delete ${s.name} and their attendance records?`)){state.students=state.students.filter(x=>x.id!==s.id);state.records=state.records.filter(r=>r.studentId!==s.id);saveState();toast("Student deleted")}});
+  $("studentsTable").addEventListener("click", e => {
+    const b = e.target.closest("[data-action]");
+    if (!b) return;
+
+    const s = state.students.find(x => x.id === b.dataset.id);
+    if (!s) return;
+
+    if (b.dataset.action === "qr") {
+        showQr(s);
+    }
+
+    if (b.dataset.action === "face") {
+        pendingEnrollment = s;
+        navigate("scanner");
+
+        if (!modelsReady) {
+            toast("Wait for face models to load.");
+        } else {
+            toast("Student selected. Start camera and capture face.");
+        }
+    }
+
+    if (b.dataset.action === "delete" &&
+        confirm(`Delete ${s.name} and their attendance records?`)) {
+
+        state.students = state.students.filter(x => x.id !== s.id);
+        state.records = state.records.filter(r => r.studentId !== s.id);
+
+        saveState();
+        toast("Student deleted");
+    }
+});
+}
   $("closeQrDialog").onclick=()=>$("qrDialog").close();$("printQrBtn").onclick=()=>window.print();$("recordDate").onchange=renderRecords;$("recordFilter").onchange=renderRecords;
   $("recordsTable").addEventListener("click",e=>{const b=e.target.closest("[data-action]");if(!b)return;const s=state.students.find(x=>x.id===b.dataset.id);if(!s)return;const date=$("recordDate").value||today();let r=state.records.find(x=>x.studentId===s.id&&x.date===date);if(b.dataset.action==="present"){if(r)Object.assign(r,{status:"Present",time:timeNow(),method:"Manual"});else state.records.push({studentId:s.id,date,time:timeNow(),method:"Manual",status:"Present"})}else if(r)r.status="Absent";saveState()});
   $("markAbsentBtn").onclick=()=>{const date=$("recordDate").value||today();state.students.forEach(s=>{if(!attendanceFor(s.id,date))state.records.push({studentId:s.id,date,time:"—",method:"Not checked in",status:"Absent"})});saveState();toast("Remaining students marked absent")};
